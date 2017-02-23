@@ -2,7 +2,6 @@
 
 This is a tool to synchronize and load Canvas Data into a database. It is written with the Laravel framework.
 
----
 
 ## Installation
 
@@ -55,7 +54,6 @@ To install globally, use the following snippet.
 3. Create Database schema
   * All that's been tested is MySQl `utf8mb4 - default collation`
 
----
 
 ## Command Reference
 
