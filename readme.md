@@ -39,20 +39,21 @@ To install globally, use the following snippet.
 
 1. Edit .env file
 2. Change the following lines to match your environment
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=Canvas_Data
-DB_USERNAME=username
-DB_PASSWORD=password
+  * `
+    DB_CONNECTION=mysql
+    DB_HOST=127.0.0.1
+    DB_PORT=3306
+    DB_DATABASE=Canvas_Data
+    DB_USERNAME=username
+    DB_PASSWORD=password
 
-Use the Key & Secret provided by Canvas Data
-API_KEY=
-API_SECRET=
-API_BASEURL=https://portal.inshosteddata.com
-
+    # Use the Key & Secret provided by Canvas Data
+    API_KEY=
+    API_SECRET=
+    API_BASEURL=https://portal.inshosteddata.com
+`
 3. Create Database schema
-All that's been tested is MySQl `utf8mb4 - default collation`
+  * All that's been tested is MySQl `utf8mb4 - default collation`
 
 ---
 
