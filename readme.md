@@ -38,8 +38,8 @@ To install globally, use the following snippet.
 `cp .env.example .env`
 
 1. Edit .env file
-2. Change the following lines to match your environment
-  * ```
+2. Change the following lines to match your environment 
+```
     DB_CONNECTION=mysql
     DB_HOST=127.0.0.1
     DB_PORT=3306
