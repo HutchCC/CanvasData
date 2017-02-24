@@ -38,10 +38,14 @@ composer install
 **Configuration**
 
 1. Copy the .env.example file to .env 
+  
   `cp .env.example .env`
-3. Edit .env file
+
+2. Edit .env file
+
   `nano .env`
-4. Change the following lines to match your environment 
+
+3. Change the following lines to match your environment 
   ```  
   DB_CONNECTION=mysql  
   DB_HOST=127.0.0.1  
@@ -55,14 +59,18 @@ composer install
   API_SECRET=  
   API_BASEURL=https://portal.inshosteddata.com  
   ```  
-3. Generate unique artisan key for Laravel
+4. Generate unique artisan key for Laravel
+
   `php artisan key:generate`
-4. Set permissions
+
+5. Set permissions
+
   ```  
   chmod -R 777 bootstrap/cache  
   chmod -R 777 storage  
   ```  
-5. Create Database schema
+
+6. Create Database schema
   * All that's been tested is MySQl `utf8mb4 - default collation`
   * Be sure to name the schema the same as what is specified in the .env file for `DB_DATABASE=Canvas_Data`
   ```  
