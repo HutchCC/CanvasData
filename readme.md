@@ -30,7 +30,10 @@ To install globally, use the following snippet.
 
 **Composer**
 
-`composer install`
+```
+cd CanvasData
+composer install
+```
 
 **Configuration**
 
@@ -51,8 +54,22 @@ To install globally, use the following snippet.
     API_SECRET=
     API_BASEURL=https://portal.inshosteddata.com
 ```
-3. Create Database schema
+3. Generate unique artisan key for Laravel
+`php artisan key:generate`
+
+4. Set permissions
+```
+chmod -R 777 bootstrap/cache
+chmod -R 777 storage
+```
+
+5. Create Database schema
   * All that's been tested is MySQl `utf8mb4 - default collation`
+  * Be sure to name the schema the same as what is specified in the .env file for `DB_DATABASE=Canvas_Data`
+  
+```
+  CREATE SCHEMA `Canvas_Data` DEFAULT CHARACTER SET utf8mb4 ;
+```
 
 
 ## Command Reference
