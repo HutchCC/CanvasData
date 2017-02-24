@@ -41,37 +41,35 @@ composer install
 
 1. Edit .env file
 2. Change the following lines to match your environment 
-```
-    DB_CONNECTION=mysql
-    DB_HOST=127.0.0.1
-    DB_PORT=3306
-    DB_DATABASE=Canvas_Data
-    DB_USERNAME=username
-    DB_PASSWORD=password
+  * ```
+      DB_CONNECTION=mysql
+      DB_HOST=127.0.0.1
+      DB_PORT=3306
+      DB_DATABASE=Canvas_Data
+      DB_USERNAME=username
+      DB_PASSWORD=password
 
-    # Use the Key & Secret provided by Canvas Data
-    API_KEY=
-    API_SECRET=
-    API_BASEURL=https://portal.inshosteddata.com
-```
+      # Use the Key & Secret provided by Canvas Data
+      API_KEY=
+      API_SECRET=
+      API_BASEURL=https://portal.inshosteddata.com
+    ```
 3. Generate unique artisan key for Laravel
-`php artisan key:generate`
+  * `php artisan key:generate`
 
 4. Set permissions
-```
-chmod -R 777 bootstrap/cache
-chmod -R 777 storage
-```
+  * ```
+    chmod -R 777 bootstrap/cache
+    chmod -R 777 storage
+    ```
 
 5. Create Database schema
   * All that's been tested is MySQl `utf8mb4 - default collation`
   * Be sure to name the schema the same as what is specified in the .env file for `DB_DATABASE=Canvas_Data`
-  
-```
-  CREATE SCHEMA `Canvas_Data` DEFAULT CHARACTER SET utf8mb4 ;
-```
-
-
+  * ```
+    CREATE SCHEMA `Canvas_Data` DEFAULT CHARACTER SET utf8mb4 ;
+    ```
+    
 ## Command Reference
 
 1. Download all of the canvas data files for your account.
