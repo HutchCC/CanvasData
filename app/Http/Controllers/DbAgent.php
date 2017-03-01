@@ -185,7 +185,7 @@ class DbAgent extends Controller
                 \DB::table($tableName)->truncate();
                 \DB::unprepared(\DB::raw("set bulk_insert_buffer_size= 1024 * 1024 * 256;"));
                 \DB::unprepared(\DB::raw("alter table $tableName disable keys;"));
-                \DB::unprepared(\DB::raw("LOAD DATA INFILE '/var/lib/mysql-files/$tableName.txt' INTO TABLE " . $tableName . " ;"));
+                \DB::unprepared(\DB::raw("LOAD DATA LOCAL INFILE '".storage_path('canvasData/unpackedData')."/$tableName.txt' INTO TABLE " . $tableName . " ;"));
                 \DB::unprepared(\DB::raw("alter table $tableName enable keys;"));
         } catch (Exception $e) {
                 echo 'Caught exception: ' .  $e->getMessage() . PHP_EOL;

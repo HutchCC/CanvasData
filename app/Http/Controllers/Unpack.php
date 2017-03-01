@@ -16,7 +16,7 @@ class Unpack extends Controller
         $schemaJson = $this->getSchema();
         foreach ($schemaJson['schema'] as $table) {
             $tableName = $table['tableName'];
-            $this->upackFile($tableName);
+            $this->unpackFile($tableName);
         }
     }
 
