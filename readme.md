@@ -71,6 +71,7 @@ composer install
   ```  
 
 6. Create Database schema
+  * If you have an existing schema, it is best to drop it and re-create it so that it gets the correct collation & character set.
   * All that's been tested is MySQl `utf8mb4 - default collation`
   * Be sure to name the schema the same as what is specified in the .env file for `DB_DATABASE=Canvas_Data`
   ```  
