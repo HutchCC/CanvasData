@@ -2,30 +2,39 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Http\Controllers\ApiConnection;
 use App\Http\Requests;
+use Carbon\Carbon;
 use GuzzleHttp\Client as Guzzle;
+use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Pool;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\Request as GuzzleRequest;
-use GuzzleHttp\Pool;
-use GuzzleHttp\Exception\RequestException;
+use Illuminate\Http\Request;
 use Storage;
-use App\Http\Controllers\ApiConnection;
 
 class Sync extends Controller
 {
+    private $syncMap = [];
+    private $lastSyncTime;
+    private $maxRetries = 5;
+    private $awsTimeout = 5;
 
-
+    public function __construct()
+    {
+        
+    }
 
     public function sync()
     {
         $this->downloadLatestSchemaFile();
 
-        $syncMap = $this->getLatestSyncMap();
-        $this->downloadAllFilesOnMap($syncMap);
+        $this->getLatestSyncMap();
+        
+        $this->downloadAllFilesOnMap();
         
         echo PHP_EOL . 'Deleting old files. ' . PHP_EOL . PHP_EOL;
-        $this->deleteOldFiles($syncMap);
+        $this->deleteOldFiles();
     }
 
 
@@ -35,28 +44,57 @@ class Sync extends Controller
         $api = new ApiConnection();
         $schema = $api->get('/api/schema/latest');
         Storage::disk('packedData')->put('schema.json', $schema);
+
+        return $this;
     }
 
 
 
     private function getLatestSyncMap()
     {
-        $api = new ApiConnection();
-        return json_decode($api->get('/api/account/self/file/sync'), true);
+        // If syncmap is empty - refresh
+        if (empty($this->syncMap)) {
+            $this->lastSyncTime = Carbon::now();
+
+            echo 'Fetching syncmap' . PHP_EOL;
+            $api = new ApiConnection();
+            $this->syncMap = json_decode($api->get('/api/account/self/file/sync'), true);
+        }
+        
+        return $this;
     }
 
-    private function downloadAllFilesOnMap($syncMap)
+    private function downloadAllFilesOnMap()
     {
-        foreach ($syncMap['files'] as $file) {
-            if (!Storage::disk('packedData')->exists('/' . $file['table'] .'/'. $file['filename'])) {
-                echo $file['filename'] . ' does not exist.' . PHP_EOL;
-                echo 'Downloading ' . $file['filename'] . PHP_EOL;
-                $refreshedFile = $this->getRefreshedFileInfo($file);
-                //echo $refreshedFile['url'] . PHP_EOL . PHP_EOL;
-                $this->downloadFile($refreshedFile);
-            } else {
-                echo $file['filename'] . ' already exists. No need to download.' . PHP_EOL;
+        $retries = 0;
+        while ($retries < $this->maxRetries) {
+            if ($retries > 0) {
+                // Refresh syncMap
+                echo 'An error occurred, attempting to retry. Retry count: ' . $retries . PHP_EOL;
+                $this->syncMap = [];
+                $this->getLatestSyncMap();
             }
+
+            foreach ($this->syncMap['files'] as $file) {
+                if (!Storage::disk('packedData')->exists('/' . $file['table'] .'/'. $file['filename'])) {
+                    echo $file['filename'] . ' does not exist.' . PHP_EOL;
+
+                    // Check to see if the timer has expired.
+                    $now = Carbon::now();
+                    if ($this->lastSyncTime->diffInMinutes($now) > $this->awsTimeout) {
+                        break;
+                    }
+
+                    // Attempt to download the file
+                    if (!$this->downloadFile($file)) {
+                        break;
+                    }
+                } else {
+                    echo $file['filename'] . ' already exists. No need to download.' . PHP_EOL;
+                }
+            }
+
+            $retries++;
         }
     }
 
@@ -64,42 +102,35 @@ class Sync extends Controller
 
     private function downloadFile($file)
     {
+        echo 'Downloading ' . $file['filename'] . ' from ' . $file['url']  . PHP_EOL;
+        
         $client = new Guzzle(['http_errors' => false]);
-        $retries = 0;
-        while ($retries < 5) {
-            try {
-                $response = $client->request('GET', $file['url']);
-                if ($response->getStatusCode() == 200) {
-                    Storage::disk('packedData')->put($file['table'] . '/' . $file['filename'], $response->getBody());
-                    break;
-                }
-            } catch (RequestException $e) {
-                echo Psr7\str($e->getRequest());
-                if ($e->hasResponse()) {
-                    echo Psr7\str($e->getResponse());
-                }
+        try {
+            $response = $client->request('GET', $file['url']);
+            if ($response->getStatusCode() == 200) {
+                Storage::disk('packedData')->put($file['table'] . '/' . $file['filename'], $response->getBody());
             }
-
+            return true;
+        } catch (RequestException $e) {
+            echo Psr7\str($e->getRequest());
+            if ($e->hasResponse()) {
+                echo Psr7\str($e->getResponse());
+            }
             echo 'Error during file download ' . $response->getStatusCode() . PHP_EOL;
             echo 'File url: ' . $file['url'] . PHP_EOL;
             echo 'Response ' . $response->getBody() . PHP_EOL;
-            // var_dump($response->getHeaders());
-            echo 'Retrying url' . PHP_EOL;
-            echo PHP_EOL . PHP_EOL;
 
-            $retries++;
-            sleep(2);
+            return false;
         }
-        
-        unset($client);
     }
 
 
 
     private function getRefreshedFileInfo($originalFile)
     {
-        $updatedSyncMap = $this->getLatestSyncMap();
-        foreach ($updatedSyncMap['files'] as $refreshedFile) {
+        // $updatedSyncMap = $this->getLatestSyncMap();
+        $this->getLatestSyncMap();
+        foreach ($this->syncMap['files'] as $refreshedFile) {
             if ($originalFile['filename'] == $refreshedFile['filename']) {
                 return $refreshedFile;
             }
@@ -111,9 +142,9 @@ class Sync extends Controller
 
 
 
-    private function deleteOldFiles($syncMap)
+    private function deleteOldFiles()
     {
-        $currentAPIFiles = $this->getCurrentAPIFiles($syncMap);
+        $currentAPIFiles = $this->getCurrentAPIFiles($this->syncMap);
         $directoriesOnDisk = Storage::disk('packedData')->directories();
         foreach ($directoriesOnDisk as $directory) {
 
@@ -130,12 +161,12 @@ class Sync extends Controller
 
 
 
-    private function getCurrentAPIFiles($syncMap = null)
+    private function getCurrentAPIFiles()
     {
-        $syncMap = $syncMap ? : $this->getLatestSyncMap();
+        $this->getLatestSyncMap();
         
         $currentAPIFiles = array();
-        foreach ($syncMap['files'] as $file) {
+        foreach ($this->syncMap['files'] as $file) {
             array_push($currentAPIFiles, $file['filename']);
         }
 
