@@ -46,7 +46,7 @@ class CanvasDataUnpack extends Command
         $arguments = $this->argument();
         $tableNames = explode(',', $arguments['tableName']);
         foreach ($tableNames as $tableName) {
-            return (new \App\Http\Controllers\Unpack)->unpackFile($tableName);
+            (new \App\Http\Controllers\Unpack)->unpackFile($tableName);
         }
     }
 }

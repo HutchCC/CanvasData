@@ -18,7 +18,7 @@ class CanvasDataLoadTable extends Command
      *
      * @var string
      */
-    protected $description = 'Command description';
+    protected $description = 'Loads the unpacked files into the tables';
 
     /**
      * Create a new command instance.
@@ -41,6 +41,12 @@ class CanvasDataLoadTable extends Command
             return (new \App\Http\Controllers\DbAgent)->loadTables();
         }
         
-        return (new \App\Http\Controllers\DbAgent)->loadTable($this->argument('tableName'));
+        // Load a single table or array of tables
+        $arguments = $this->argument();
+        $tableNames = explode(',', $arguments['tableName']);
+        foreach ($tableNames as $tableName) {
+            (new \App\Http\Controllers\DbAgent)->loadTable($tableName);
+        }
+        
     }
 }
